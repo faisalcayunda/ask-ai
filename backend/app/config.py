@@ -34,6 +34,14 @@ class Settings(BaseSettings):
     # env_ignore_empty: `FOO=` in .env or compose counts as unset (matters for the JSON settings below).
     model_config = SettingsConfigDict(env_file=("../.env", ".env"), extra="ignore", env_ignore_empty=True)
 
+    @classmethod
+    def settings_customise_sources(
+        cls, settings_cls, init_settings, env_settings, dotenv_settings, file_secret_settings
+    ):
+        # .env beats the process environment, so a generic shell export (LLM_API_KEY from another tool) cannot shadow
+        # it on host runs. Containers have no .env file and still read the environment compose hands them.
+        return init_settings, dotenv_settings, env_settings, file_secret_settings
+
     # Database. Host defaults match the compose port mapping; the api container overrides them.
     db_host: str = "127.0.0.1"
     db_port: int = 5433
